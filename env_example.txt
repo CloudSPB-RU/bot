@@ -1,0 +1,12 @@
+# Telegram Bot Token
+BOT_TOKEN=your_bot_token_here
+
+# Pterodactyl API
+PTERODACTYL_TOKEN=your_pterodactyl_token_here
+PTERODACTYL_URL=https://your-panel-domain.com
+
+# Telegram Channel
+CHANNEL_USERNAME=@your_channel_username
+
+# Admin IDs (через запятую)
+ADMIN_IDS=123456789,987654321 
