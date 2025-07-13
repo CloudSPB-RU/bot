@@ -1,6 +1,16 @@
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
+=======
+# Created by https://www.toptal.com/developers/gitignore/api/python
+# Edit at https://www.toptal.com/developers/gitignore?templates=python
+
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+>>>>>>> d18388f (init)
 *$py.class
 
 # C extensions
@@ -46,7 +56,11 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+<<<<<<< HEAD
 *.py.cover
+=======
+*.py,cover
+>>>>>>> d18388f (init)
 .hypothesis/
 .pytest_cache/
 cover/
@@ -94,18 +108,22 @@ ipython_config.py
 #   install all needed dependencies.
 #Pipfile.lock
 
+<<<<<<< HEAD
 # UV
 #   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
 #   This is especially recommended for binary packages to ensure reproducibility, and is more
 #   commonly ignored for libraries.
 #uv.lock
 
+=======
+>>>>>>> d18388f (init)
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
 #   This is especially recommended for binary packages to ensure reproducibility, and is more
 #   commonly ignored for libraries.
 #   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
 #poetry.lock
+<<<<<<< HEAD
 #poetry.toml
 
 # pdm
@@ -123,6 +141,16 @@ ipython_config.py
 #   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
 #   in the .venv directory. It is recommended not to include this directory in version control.
 .pixi
+=======
+
+# pdm
+#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#pdm.lock
+#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
+#   in version control.
+#   https://pdm.fming.dev/#use-with-ide
+.pdm.toml
+>>>>>>> d18388f (init)
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
@@ -136,7 +164,10 @@ celerybeat.pid
 
 # Environments
 .env
+<<<<<<< HEAD
 .envrc
+=======
+>>>>>>> d18388f (init)
 .venv
 env/
 venv/
@@ -144,6 +175,12 @@ ENV/
 env.bak/
 venv.bak/
 
+<<<<<<< HEAD
+=======
+# DB
+*.db
+
+>>>>>>> d18388f (init)
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -175,6 +212,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+<<<<<<< HEAD
 # Abstra
 # Abstra is an AI-powered process automation framework.
 # Ignore directories containing user credentials, local state, and settings.
@@ -205,3 +243,16 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+=======
+### Python Patch ###
+# Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
+poetry.toml
+
+# ruff
+.ruff_cache/
+
+# LSP config files
+pyrightconfig.json
+
+# End of https://www.toptal.com/developers/gitignore/api/python
+>>>>>>> d18388f (init)
