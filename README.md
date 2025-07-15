@@ -23,7 +23,7 @@
 
 ### 1. Клонирование репозитория
 ```bash
-git clone <repository_url>
+git clone https://github.com/CloudSPB-RU/bot/
 cd bot
 ```
 

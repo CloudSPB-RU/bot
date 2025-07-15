@@ -3,7 +3,7 @@ import logging
 import asyncio
 from datetime import datetime
 from functools import wraps
-from typing import Callable, Any, Coroutine
+from typing import Callable, Any, Coroutine, Dict
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler, 
@@ -208,7 +208,6 @@ class TelegramBot:
                 [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            
             await query.edit_message_text(
                 f"🚫 <b>Вы заблокированы!</b>\n\n"
                 f"Причина: {ban_reason}\n\n"
@@ -217,7 +216,6 @@ class TelegramBot:
                 parse_mode='HTML'
             )
             return
-        
         # Проверяем подписку
         subscription_info = await self.subscription_checker.check_subscription(user_id)
         if not subscription_info['is_subscribed'] or not subscription_info['meets_time_requirement']:
@@ -226,7 +224,6 @@ class TelegramBot:
                 [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            
             await query.edit_message_text(
                 subscription_message,
                 reply_markup=reply_markup,
@@ -242,7 +239,6 @@ class TelegramBot:
                 [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            
             await query.edit_message_text(
                 "❌ <b>У вас уже есть сервер!</b>\n\n"
                 f"Количество серверов: {len(user_servers)}\n"
@@ -251,7 +247,6 @@ class TelegramBot:
                 parse_mode='HTML'
             )
             return
-        
         # Проверяем, указан ли email
         if not user_data or not user_data.get('email'):
             keyboard = [
@@ -259,7 +254,6 @@ class TelegramBot:
                 [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            
             await query.edit_message_text(
                 "📧 <b>Сначала укажите email!</b>\n\n"
                 "Для получения сервера необходимо указать email.\n"
@@ -268,84 +262,136 @@ class TelegramBot:
                 parse_mode='HTML'
             )
             return
-        
-        # Генерируем безопасные учетные данные
-        from utils.credentials import CredentialGenerator
-        credentials = CredentialGenerator.generate_credentials(user_id, user_data.get('first_name'))
-        
-        # Создаем сервер
-        await query.edit_message_text(
-            "⏳ <b>Создаем сервер...</b>\n\n"
-            "Пожалуйста, подождите. Это может занять несколько минут.",
-            parse_mode='HTML'
-        )
-        
-        try:
-            if not self.pterodactyl_api:
-                await query.edit_message_text(
-                    "❌ <b>Сервис создания серверов недоступен!</b>\n\n"
-                    "Обратитесь к администратору.",
-                    parse_mode='HTML'
-                )
-                return
-                
-            server_result = await self.pterodactyl_api.create_server_with_credentials(credentials)
-            if server_result:
-                server_id = server_result.get('attributes', {}).get('identifier')
-                server_name = server_result.get('attributes', {}).get('name')
-                
-                # Сохраняем в базу данных с учетными данными
-                if self.db.create_server_with_credentials(user_id, server_id, server_name, credentials):
+        # Проверяем email на уникальность в Pterodactyl
+        if self.pterodactyl_api:
+            try:
+                exists = await self.pterodactyl_api.check_user_exists(email=user_data.get('email'))
+                if exists:
                     keyboard = [
-                        [InlineKeyboardButton("📊 Мой сервер", callback_data="my_servers")],
+                        [InlineKeyboardButton("📧 Указать другой email", callback_data="set_email")],
                         [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
                     ]
                     reply_markup = InlineKeyboardMarkup(keyboard)
-                    
                     await query.edit_message_text(
-                        f"✅ <b>Сервер создан успешно!</b>\n\n"
-                        f"Server ID: {server_id}\n"
-                        f"Username: {credentials['username']}\n"
-                        f"Password: {credentials['password']}\n"
-                        f"Email: {credentials['email']}\n\n"
-                        "Данные для входа в панель управления.",
+                        "❌ <b>Ошибка: Email уже используется в панели!</b>\n\n"
+                        "Код ошибки: EMAIL_EXISTS\n"
+                        "Пожалуйста, укажите другой email.",
                         reply_markup=reply_markup,
                         parse_mode='HTML'
                     )
-                else:
-                    keyboard = [
-                        [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
-                    ]
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    
-                    await query.edit_message_text(
-                        "❌ <b>Ошибка при сохранении сервера!</b>\n\n"
-                        "Обратитесь к администратору.",
-                        reply_markup=reply_markup,
-                        parse_mode='HTML'
-                    )
-            else:
+                    return
+            except Exception as e:
+                logger.error(f"Ошибка проверки email в Pterodactyl: {e}")
                 keyboard = [
                     [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
-                
                 await query.edit_message_text(
-                    "❌ <b>Ошибка при создании сервера!</b>\n\n"
-                    "Обратитесь к администратору.",
+                    "❌ <b>Ошибка при проверке email!</b>\n\n"
+                    "Код ошибки: PT_EMAIL_CHECK\n"
+                    "Попробуйте позже.",
                     reply_markup=reply_markup,
                     parse_mode='HTML'
                 )
-        except Exception as e:
-            logger.error(f"Ошибка создания сервера: {e}")
+                return
+        # Генерируем безопасные учетные данные с попытками
+        from utils.credentials import CredentialGenerator
+        max_attempts = 3
+        server_result = None
+        credentials = None
+        error_code = None
+        error_message = None
+        if not self.pterodactyl_api:
             keyboard = [
                 [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            
             await query.edit_message_text(
-                "❌ <b>Ошибка при создании сервера!</b>\n\n"
-                "Попробуйте позже или обратитесь к администратору.",
+                "❌ <b>Сервис создания серверов недоступен!</b>\n\nКод ошибки: PT_API_UNAVAILABLE\nОбратитесь к администратору.",
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+            return
+        for attempt in range(max_attempts):
+            credentials = CredentialGenerator.generate_credentials(user_id, user_data.get('first_name'))
+            # Проверяем уникальность username/email в Pterodactyl
+            try:
+                exists = await self.pterodactyl_api.check_user_exists(
+                    email=credentials['email'],
+                    username=credentials['username']
+                )
+            except Exception as e:
+                logger.error(f"Ошибка проверки username/email в Pterodactyl: {e}")
+                exists = True
+            if exists:
+                if attempt == max_attempts - 1:
+                    error_code = "PT_USER_EXISTS"
+                    error_message = "Не удалось сгенерировать уникальные данные для панели. Попробуйте позже."
+                continue
+            # Пытаемся создать сервер
+            await query.edit_message_text(
+                f"⏳ <b>Создаем сервер... (попытка {attempt+1})</b>\n\nПожалуйста, подождите.",
+                parse_mode='HTML'
+            )
+            try:
+                server_result = await self.pterodactyl_api.create_server_with_credentials(credentials)
+                if server_result:
+                    break
+                else:
+                    error_code = "PT_SERVER_CREATE"
+                    error_message = "Ошибка при создании сервера."
+            except Exception as e:
+                logger.error(f"Ошибка создания сервера: {e}")
+                error_code = "PT_SERVER_CREATE_EXCEPTION"
+                error_message = f"Ошибка при создании сервера: {e}"
+        if not server_result or not credentials:
+            keyboard = [
+                [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text(
+                f"❌ <b>Ошибка при создании сервера!</b>\n\nКод ошибки: {error_code or 'UNKNOWN'}\n{error_message or ''}\nОбратитесь к администратору.",
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+            return
+        server_id = server_result.get('attributes', {}).get('identifier') if server_result else None
+        server_name = server_result.get('attributes', {}).get('name') if server_result else None
+        if not server_id or not server_name:
+            keyboard = [
+                [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text(
+                "❌ <b>Ошибка при получении данных сервера!</b>\n\nКод ошибки: PT_SERVER_ATTRS\nОбратитесь к администратору.",
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+            return
+        # Сохраняем в базу данных с учетными данными
+        if self.db.create_server_with_credentials(user_id, server_id, server_name, credentials):
+            keyboard = [
+                [InlineKeyboardButton("📊 Мой сервер", callback_data="my_servers")],
+                [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text(
+                f"✅ <b>Сервер создан успешно!</b>\n\n"
+                f"Server ID: {server_id}\n"
+                f"Username: {credentials['username']}\n"
+                f"Password: {credentials['password']}\n"
+                f"Email: {credentials['email']}\n\n"
+                "Данные для входа в панель управления.",
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+        else:
+            keyboard = [
+                [InlineKeyboardButton("🔙 Назад", callback_data="back_to_start")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text(
+                "❌ <b>Ошибка при сохранении сервера!</b>\n\nКод ошибки: DB_SERVER_SAVE\nОбратитесь к администратору.",
                 reply_markup=reply_markup,
                 parse_mode='HTML'
             )

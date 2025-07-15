@@ -1,7 +1,6 @@
 python-telegram-bot>=22.2
 python-dotenv>=1.1.1
 requests>=2.32.4
-sqlite3
 asyncio>=3.4.3
 aiohttp>=3.12.14
 cryptography>=45.0.5
