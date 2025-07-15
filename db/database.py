@@ -372,3 +372,16 @@ class Database:
         except Exception as e:
             logger.error(f"Ошибка проверки уникальности email: {e}")
             return False 
+
+    def get_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
+        """Получить пользователя по внутреннему ID (users.id)"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM users WHERE id = ?
+            ''', (user_id,))
+            row = cursor.fetchone()
+            if row:
+                columns = [description[0] for description in cursor.description]
+                return dict(zip(columns, row))
+            return None 

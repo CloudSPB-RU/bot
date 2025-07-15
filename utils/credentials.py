@@ -2,6 +2,7 @@ import secrets
 import string
 import hashlib
 from typing import Dict, Tuple, Optional
+import re
 
 class CredentialGenerator:
     """Генератор безопасных учетных данных"""
@@ -10,11 +11,18 @@ class CredentialGenerator:
     def generate_username(telegram_id: int, first_name: Optional[str] = None) -> str:
         """Генерирует уникальное имя пользователя"""
         base = first_name.lower() if first_name else f"user{telegram_id}"
-        # Убираем спецсимволы и ограничиваем длину
         base = ''.join(c for c in base if c.isalnum())[:10]
-        # Добавляем случайный суффикс для уникальности
         suffix = secrets.token_hex(3)
-        return f"{base}_{suffix}"
+        username = f"{base}_{suffix}"
+        # Оставляем только разрешённые символы
+        username = re.sub(r'[^a-zA-Z0-9._-]', '', username)
+        # Убираем запрещённые символы в начале и конце
+        username = re.sub(r'^[^a-zA-Z0-9]+', '', username)
+        username = re.sub(r'[^a-zA-Z0-9]+$', '', username)
+        # Если после чистки username пустой — fallback
+        if not username:
+            username = f"user{telegram_id}{secrets.token_hex(2)}"
+        return username
     
     @staticmethod
     def generate_password() -> str:

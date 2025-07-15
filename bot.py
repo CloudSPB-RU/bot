@@ -660,13 +660,13 @@ class TelegramBot:
     def setup_handlers(self):
         """Настройка обработчиков"""
         # Команды пользователей
-        self.application.add_handler(CommandHandler("start", self.handle_start))
-        self.application.add_handler(CommandHandler("check", self.handle_check))
-        self.application.add_handler(CommandHandler("help", self.handle_help))
+        self.application.add_handler(CommandHandler("start", self.handle_start, block=False))
+        self.application.add_handler(CommandHandler("check", self.handle_check, block=False))
+        self.application.add_handler(CommandHandler("help", self.handle_help, block=False))
         
         # Админские команды
-        self.application.add_handler(CommandHandler("ban", self.handle_ban))
-        self.application.add_handler(CommandHandler("unban", self.handle_unban))
+        self.application.add_handler(CommandHandler("ban", self.handle_ban, block=False))
+        self.application.add_handler(CommandHandler("unban", self.handle_unban, block=False))
         self.application.add_handler(CommandHandler("giveserver", self.handle_give_server))
         self.application.add_handler(CommandHandler("deleteserver", self.handle_delete_server))
         self.application.add_handler(CommandHandler("admin", self.handle_admin_panel))

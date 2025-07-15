@@ -32,8 +32,8 @@ class AdminCommands:
             if not db_server:
                 return "❌ Сервер не найден в базе данных"
             
-            # Получаем информацию о владельце
-            user_data = self.db.get_user(db_server['user_id'])
+            # Получаем информацию о владельце (по id из таблицы users)
+            user_data = self.db.get_user_by_id(db_server['user_id']) if hasattr(self.db, 'get_user_by_id') else None
             owner_info = "👤 <b>Владелец</b>\nИнформация о владельце не найдена"
             
             if user_data:
@@ -106,7 +106,7 @@ class AdminCommands:
         
         response = "📊 <b>Список всех серверов:</b>\n\n"
         for server in servers:
-            user_data = self.db.get_user(server['user_id'])
+            user_data = self.db.get_user_by_id(server['user_id']) if hasattr(self.db, 'get_user_by_id') else None
             owner_info = "Владелец не найден"
             if user_data:
                 username = user_data.get('username', 'Нет username')
@@ -209,7 +209,7 @@ class AdminCommands:
             return
         
         # Баним пользователя
-        if self.db.ban_user(user_data['telegram_id'], reason):
+        if self.db.ban_user(user_data['telegram_id'], reason or ""):
             self.db.log_admin_action(
                 update.effective_user.id,
                 "ban_user",
